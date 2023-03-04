@@ -29,6 +29,7 @@ lvls = [0,5000,10000,15000] # m
 
 # Specify grid number to plot
 gridnum = '2'
+filetype = 'A' # Analysis (A) or Lite (L) files
 
 # Specify grid point bounds for zooming in
 # leave x0 = -1 to not use this feature
@@ -68,9 +69,9 @@ scale['RV'] = 1000 #g/kg
 scale['RLONTOP'] = 1 #W/m2
 
 # use glob to get list of h5 and header files
-h5filepath = path+'a-A*g'+gridnum+'.h5'
+h5filepath = path+'a-'+filetype+'*g'+gridnum+'.h5'
 h5files1 = sorted(glob.glob(h5filepath))
-hefilepath = path+'a-A*head.txt'
+hefilepath = path+'a-'+filetype+'*head.txt'
 hefiles1 = sorted(glob.glob(hefilepath))
 print(h5files1)
 
