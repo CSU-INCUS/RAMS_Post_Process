@@ -1,0 +1,23 @@
+#PBS -S /bin/csh
+#PBS -V
+#PBS -q devel
+#PBS -lselect=20:ncpus=1:model=bro,walltime=2:00:00
+#PBS -j oe
+#PBS -o ./stdout/ 
+#PBS -N INCUS_DRC1.1_plots
+#PBS -m be
+#PBS -r n
+#PBS -W group_list=s2841
+
+setenv MPI_TYPE_DEPTH 16
+module load gcc/10.3 mpi-hpe/mpt.2.25 comp-intel/2020.4.304 szip/2.1.1
+
+# CD into current directory
+cd /home5/pmarines/INCUS/Plot_Code/git/RAMS_Post_Process
+
+limit coredumpsize unlimited
+setenv MPI_SHEPHERD true
+
+# Run script wit mpi command with -np number of processors
+# Make sure -np matches -lsecelt= above
+mpiexec -np 20 bash ./run_plot_w_itc_II.sh 0
