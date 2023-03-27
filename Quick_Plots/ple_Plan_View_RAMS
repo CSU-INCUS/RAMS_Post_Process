@@ -1,0 +1,11 @@
+#PBS -S /bin/csh
+#PBS -V
+#PBS -q normal
+#PBS -lselect=1:ncpus=1:mpiprocs=1:model=bro,walltime=02:00:00
+#PBS -j oe
+#PBS -o /home5/pmarines/INCUS/Plot_Code/git/RAMS_Post_Process/Quick_Plots/stdout/ 
+#PBS -N INCUS_RAMS_Plan_View
+#PBS -m be
+#PBS -r n
+
+/home5/pmarines/miniconda3/envs/plotenv/bin/python Plan_View_RAMS.py > planviewoutput.txt 
