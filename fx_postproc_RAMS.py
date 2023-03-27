@@ -8,12 +8,15 @@ Created on Sat Aug 27 16:37:02 2022
 
 # Import libaries used in the various functions
 import h5py
+import hdf5plugin
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 import re
 import datetime
 import xarray as xr
+import os
+from jug import TaskGenerator
 
 def save_rams2D_to_netcdf(h5path,var_names, vars_in, outpath):
  
@@ -298,20 +301,26 @@ def calc_10m_wind(filename,ztn):
 
     return speed_10m
 
-
+@TaskGenerator
 def plot_w_itc(h5file,savepath,zt):
+
+    cur_time = os.path.split(h5file)[1][9:21]
 
     # Constants for calculating total integrated condensate
     cp = 1004; # J/kg/K
     rd = 287; # J/kg/K
     p00 = 100000; # Reference Pressure
-    
+    alt_des = 5000;
+
+    aid = np.where(np.abs(np.array(zt)-alt_des)==np.min(np.abs(np.array(zt)-alt_des)))[0]
+
     wp = read_var(h5file,'WP') # u component of wind (m/s)
-    nx = np.shape(wp)[1]
-    ny = np.shape(wp)[2]
+    nx = np.shape(wp)[2]
+    ny = np.shape(wp)[1]
     # Sum hydrometeor mass mixing ratios to calculate total mass mixing ratio
-    rtp = read_var(h5file,'RCP')+read_var(h5file,'RRP')+read_var(h5file,'RPP')+read_var(h5file,'RSP')+read_var(h5file,'RAP')+read_var(h5file,'RHP')+read_var(h5file,'RGP')
-    
+    #rtp = read_var(h5file,'RCP')+read_var(h5file,'RRP')+read_var(h5file,'RPP')+read_var(h5file,'RSP')+read_var(h5file,'RAP')+read_var(h5file,'RHP')+read_var(h5file,'RGP')
+    rtp = read_var(h5file,'RTP')-read_var(h5file,'RV')    
+
     # Load variables needed to calculate density
     th = read_var(h5file,'THETA')
     pi = read_var(h5file,'PI')
@@ -328,19 +337,19 @@ def plot_w_itc(h5file,savepath,zt):
     del(pres,temp,rv)
     
     # Difference in heights (dz)    
-    diff_zt_3D = np.tile(np.diff(zt),(int(nx),int(ny),1))
+    diff_zt_3D = np.tile(np.diff(zt),(int(ny),int(nx),1))
     diff_zt_3D = np.moveaxis(diff_zt_3D,2,0)
 
     # Calculate integrated condensate
     itc = np.nansum(rtp[1:,:,:]*dens[1:,:,:]*diff_zt_3D,axis=0) # integrated total condensate in kg
     itc_mm = itc/997*1000 # integrated total condensate in mm
     itc_mm[itc_mm<=0] = 0.001
-    w_plt = np.nanmax(wp,axis=0)
+    w_plt = np.nanmax(wp[int(aid):,:,:],axis=0)
     
     # contour and colobar ticks and levels     
     w_lvls1 = np.array([2])
-    w_lvls2 = np.array([5])
-    w_lvls3 = np.array([10])
+    w_lvls2 = np.array([10])
+    w_lvls3 = np.array([30])
     itc_lvls = np.arange(0.01,10.01,0.01) # Adjusted these levels, such that figure shows regions with at least 1 grid box with 0.1 g/kg of condensate
     itc_cbar_ticks = np.log10(np.array([1,5,10]))
     itc_cbar_ticklbls = np.array([1,5,10])
@@ -354,9 +363,9 @@ def plot_w_itc(h5file,savepath,zt):
     max_dim = np.max([nx,ny])
     fs_scale = 9
     lw = 1.0
-    
+   
     # Plot Figure
-    fig,ax = plt.subplots(1,1,figsize=[nx/max_dim*fs_scale*1.3,ny/max_dim*fs_scale])
+    fig,ax = plt.subplots(1,1,figsize=[nx/max_dim*fs_scale,ny/max_dim*fs_scale/1.2]) # Divide y by 1.2 to account for colorbar
     #a = ax.contourf(np.log10(itc_mm),levels=np.log10(itc_lvls),extend='both',cmap=plt.cm.Blues)
     ax.grid()
     a = ax.contourf(np.log10(itc_mm),levels=np.log10(itc_lvls),cmap=newcmp,extend='both')
@@ -366,9 +375,9 @@ def plot_w_itc(h5file,savepath,zt):
     cbar = plt.colorbar(a,ax=ax,ticks=itc_cbar_ticks)
     cbar.ax.set_yticklabels(itc_cbar_ticklbls)
     cbar.ax.set_ylabel('Integrated Total Condensate (mm)')
-    ax.set_title('Integrated Total Condensate (Shaded) \n Maximum Column W (Contoured) \n (Gold, purple and green contours: 2, 5, and 10 m s$^{-1}$ , respectively)')
+    ax.set_title('Integrated Total Condensate (Shaded) @ '+cur_time+' \n Maximum W above 5 km (Contoured) \n (Gold, purple and green contours: 2, 10, and 30 m s$^{-1}$ , respectively)')
     plt.tight_layout()
-    fig.savefig(savepath+'/'+'TestFigure.png')
+    fig.savefig(savepath+'/'+'WMax_IntCond_'+cur_time+'.png')
     plt.close(fig)
        
     return
