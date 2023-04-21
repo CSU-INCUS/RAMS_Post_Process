@@ -17,20 +17,27 @@ import math
 from jug import TaskGenerator
 
 # Path to RAMS .h5 and head.txt files
-#path = '/nobackup/ldgrant/pmarines/PROD/ARG1.2-R/G3/out_30s/'
-path = '/nobackup/pmarines/PROD/DRC1.1-R/G3-C/out_30s/'
+#path = '/nobackup/pmarines/PROD/DRC1.1-R/G3-C/out_30s/'
+path = '/nobackup/ldgrant/BRA1.1-R/G3/out30s/'
 
 # Path to save plots
-#savepath = '/nobackup/ldgrant/pmarines/PROD/ARG1.2-R/G3/out_30s/Plots/'
-savepath = '/nobackup/pmarines/PROD/DRC1.1-R/G3-C/out_30s/Plots/'
+#savepath = '/nobackup/pmarines/PROD/DRC1.1-R/G3-C/out_30s/Plots/'
+savepath = '/nobackup/ldgrant/BRA1.1-R/G3/plots30s/'
+# Make savepath if it doesn't exist
+if not os.path.exists(savepath):
+	os.makedirs(savepath)
 
 # Specify array of variables to plots
 # ****** Make sure to check and make sure variable is present in clvls, cmaps, and scale dictionaries below; If not there add it
-vars = ['VP','UP','WP'] # RAMS model variables
-#vars = ['RTP','RLONTOP']
+#vars = ['RLONTOP'] # RAMS model variables
+#vars = ['WP','RTP'] # RAMS model variables
+#vars = ['UP','VP','THETA'] # RAMS model variables
+vars = ['WP','RTP','UP','VP','THETA'] # RAMS model variables
 
 # Specify altitudes of levels to plots
-lvls = [50,5000,10000,15000] # m
+#lvls = [20500] # m
+#lvls = [2000,6000,12000] # m
+lvls = [50,2000,6000,12000,18000] # m
 
 # Specify grid number to plot
 gridnum = '3'
@@ -54,15 +61,17 @@ clvls['PCPVR'] = np.arange(0,100.1,1.0)
 clvls['RTP'] = np.arange(0,20,0.5)
 clvls['RV'] = np.arange(0,20,0.5)
 clvls['RLONTOP'] = np.arange(60,300.1,5)
+clvls['THETA'] = 50 # specific levels not specified for theta since it changes substantially w/ altitude
 
 cmaps = OrderedDict()
-cmaps['WP'] = plt.cm.bwr
-cmaps['UP'] = plt.cm.bwr
-cmaps['VP'] = plt.cm.bwr
+cmaps['WP'] = plt.cm.seismic # changed from bwr (blue white red) to seismic
+cmaps['UP'] = plt.cm.seismic
+cmaps['VP'] = plt.cm.seismic
 cmaps['PCPVR'] = plt.cm.viridis
 cmaps['RTP'] = plt.cm.viridis
 cmaps['RV'] = plt.cm.viridis
 cmaps['RLONTOP'] = plt.cm.viridis
+cmaps['THETA'] = plt.cm.viridis
 
 scale = OrderedDict()
 scale['WP'] = 1 #m/s
@@ -72,23 +81,23 @@ scale['PCPVR'] = 1 / 997 * 1000 * 3600 #mm/hr
 scale['RTP'] = 1000 #g/kg
 scale['RV'] = 1000 #g/kg
 scale['RLONTOP'] = 1 #W/m2
+scale['THETA'] = 1 #K
 
 # Specify details of a potential new domain
 plt_mult_dom = 0; # 1 for plotting multiple available analysis domains, 0 for plotting just specified domain above
 plt_new_dom = 0; # 0 for no, 1 for yes; only works when plt_mult_dom is on
 lat_p = OrderedDict() ; lon_p = OrderedDict()
-name = 'new'; sname3 = '' # Don't Change these parameters
-cen_lat = -31.75; cen_lon = -64.5
-nx = 2630; ny = 2780;
+name = 'new'; sname3 = '' # Don't Change these two parameters
+cen_lat = -3.0 ; cen_lon = -60.1
+nx = 1950; ny = 1950;
 dx = 100 ; dy = 100 #m
 
-cen_lat = -4.0; cen_lon = 23.7
-nx = 1424; ny = 1208;
-dx = 400 ; dy = 400 #m
+# set lat, lon plot limits if desired (only for plt_mult_dom)
+# set lon1 to less than -180 to not use this feature
+lon1 = -300; lon2 = -59;
+#lon1 = -61.2; lon2 = -59;
+lat1 = -4.2;  lat2=-1.8;
 
-cen_lat = -4.3; cen_lon = 24.9
-nx = 1880; ny = 2670;
-dx = 100 ; dy = 100 #m
 
 #### Define Function for plotting single domain (for parallization)
 @TaskGenerator
@@ -222,6 +231,7 @@ if plt_mult_dom == 0:
     h5files1 = sorted(glob.glob(h5filepath))
     hefilepath = path+'a-'+filetype+'*head.txt'
     hefiles1 = sorted(glob.glob(hefilepath))
+    print('files:')
     print(h5files1)
     
     # Loop through files
@@ -254,6 +264,7 @@ elif plt_mult_dom == 1:
     
     hefilepath = path+'a-A*head.txt'
     hefiles1 = sorted(glob.glob(hefilepath))
+    print('files:')
     print(h5files1)
     
     for i in np.arange(0,len(h5files1)):
@@ -375,6 +386,11 @@ elif plt_mult_dom == 1:
                 ax.set_title(var+' @ '+str(np.round(zcoords[zid]/1000,1))+' km:'+cur_time)
                 ax.grid()
                 plt.tight_layout()
-    
+
+		# set lat/lon bounds if desired for multi-grid plots
+                if lon1 >= -180:
+                    ax.set_xlim(lon1,lon2)
+                    ax.set_ylim(lat1,lat2)
+
                 plt.savefig(savepath+sname2+sname+'_MultiGrid_'+sname3+var+'_'+lvlstr+'_'+cur_time+'.png')
                 plt.close(fig)
