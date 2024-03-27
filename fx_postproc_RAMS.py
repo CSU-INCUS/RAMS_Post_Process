@@ -302,7 +302,7 @@ def calc_10m_wind(filename,ztn):
     return speed_10m
 
 @TaskGenerator
-def plot_w_itc(h5file,savepath,zt):
+def plot_w_itc(h5file,savepath,zt,run_ID):
 
     cur_time = os.path.split(h5file)[1][9:21]
 
@@ -314,6 +314,9 @@ def plot_w_itc(h5file,savepath,zt):
 
     aid = np.where(np.abs(np.array(zt)-alt_des)==np.min(np.abs(np.array(zt)-alt_des)))[0]
 
+    lat = read_var(h5file,'GLAT')
+    lon = read_var(h5file,'GLON')
+ 
     wp = read_var(h5file,'WP') # u component of wind (m/s)
     nx = np.shape(wp)[2]
     ny = np.shape(wp)[1]
@@ -325,7 +328,6 @@ def plot_w_itc(h5file,savepath,zt):
     th = read_var(h5file,'THETA')
     pi = read_var(h5file,'PI')
     rv = read_var(h5file,'RV')
-    
     
     # Convert RAMS native variables to temperature and pressure
     pres = np.power((pi/cp),cp/rd)*p00
@@ -368,14 +370,19 @@ def plot_w_itc(h5file,savepath,zt):
     fig,ax = plt.subplots(1,1,figsize=[nx/max_dim*fs_scale,ny/max_dim*fs_scale/1.2]) # Divide y by 1.2 to account for colorbar
     #a = ax.contourf(np.log10(itc_mm),levels=np.log10(itc_lvls),extend='both',cmap=plt.cm.Blues)
     ax.grid()
-    a = ax.contourf(np.log10(itc_mm),levels=np.log10(itc_lvls),cmap=newcmp,extend='both')
-    b = ax.contour(w_plt,levels=w_lvls1,colors='gold',linewidths=lw)
-    b = ax.contour(w_plt,levels=w_lvls2,colors='m',linewidths=lw)
-    b = ax.contour(w_plt,levels=w_lvls3,colors='limegreen',linewidths=lw)
+    #a = ax.contourf(np.log10(itc_mm),levels=np.log10(itc_lvls),cmap=newcmp,extend='both')
+    #b = ax.contour(w_plt,levels=w_lvls1,colors='gold',linewidths=lw)
+    #b = ax.contour(w_plt,levels=w_lvls2,colors='m',linewidths=lw)
+    #b = ax.contour(w_plt,levels=w_lvls3,colors='limegreen',linewidths=lw)
+    a = ax.contourf(lon,lat,np.log10(itc_mm),levels=np.log10(itc_lvls),cmap=newcmp,extend='both')
+    b = ax.contour(lon,lat,w_plt,levels=w_lvls1,colors='gold',linewidths=lw)
+    b = ax.contour(lon,lat,w_plt,levels=w_lvls2,colors='m',linewidths=lw)
+    b = ax.contour(lon,lat,w_plt,levels=w_lvls3,colors='limegreen',linewidths=lw)
     cbar = plt.colorbar(a,ax=ax,ticks=itc_cbar_ticks)
     cbar.ax.set_yticklabels(itc_cbar_ticklbls)
     cbar.ax.set_ylabel('Integrated Total Condensate (mm)')
     ax.set_title('Integrated Total Condensate (Shaded) @ '+cur_time+' \n Maximum W above 5 km (Contoured) \n (Gold, purple and green contours: 2, 10, and 30 m s$^{-1}$ , respectively)')
+    ax.set_xlabel(run_ID)
     plt.tight_layout()
     fig.savefig(savepath+'/'+'WMax_IntCond_'+cur_time+'.png')
     plt.close(fig)
