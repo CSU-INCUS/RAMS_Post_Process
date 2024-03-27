@@ -1,0 +1,19 @@
+#PBS -S /bin/csh
+#PBS -V
+#PBS -q smd_ops
+#PBS -lselect=1:ncpus=20:model=bro,walltime=2:00:00
+#PBS -j oe
+#PBS -o /nobackup/jbukowsk/PROD/RAMS_QC_Check/output_files/ 
+#PBS -N INCUS_Check_RAMS_ARG1.2
+#PBS -m be
+#PBS -r n
+#PBS -W group_list=s2841
+
+setenv MPI_TYPE_DEPTH 16
+module load  comp-intel/2018.3.222 szip/2.1.1 mpi-hpe/mpt
+limit coredumpsize unlimited
+setenv MPI_SHEPHERD true
+
+cd /nobackup/jbukowsk/PROD/RAMS_QC_Check/ 
+
+mpiexec -np 20 ./run_check_RAMS_ARG1.2.csh 0
