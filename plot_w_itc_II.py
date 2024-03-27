@@ -18,6 +18,7 @@ from jug import TaskGenerator
 
 path = '/nobackup/pmarines/PROD/ARG1.2-R/G3/out_30s/'
 savefig_path = '/nobackup/pmarines/PROD/ARG1.2-R/G3/out_30s/Plots/'
+run_ID = 'ARG1.2-R-V1-G3'
 
 # Specify file suffix and use glob to get list of files
 h5filepath = path+'a-L*g3.h5'
@@ -63,4 +64,4 @@ def loop_files(files,hfiles,zt,savefig_path):
         plot_w_itc(datafile,savefig_path,zt)
 
 # Run loop files function
-loop_files(files,hfiles,zt,savefig_path)
+loop_files(files,hfiles,zt,savefig_path,run_ID)
